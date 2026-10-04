@@ -33,11 +33,16 @@ const rollsByLoft = computed(() => {
     rolls: rolls.value
       .filter((r) => r.loftId === loft.id)
       .slice()
-      .sort((a, b) => b.fabricWeightGsm - a.fabricWeightGsm),
+      .sort((a, b) => a.fabricWeightGsm - b.fabricWeightGsm),
   }))
 })
 
-const footerCount = computed(() => rolls.value.length)
+// 架底只数当前间：有选中卷时统计其所在帆布间，未选中时默认架面首个间
+const footerCount = computed(() => {
+  const loftId = selected.value ? selected.value.loftId : lofts.value[0]?.id
+  if (loftId == null) return 0
+  return rolls.value.filter((r) => r.loftId === loftId).length
+})
 
 const selectedDips = computed(() => {
   if (!selectedId.value) return []
@@ -63,10 +68,8 @@ async function load() {
 }
 
 function openRoll(roll) {
-  const group = rollsByLoft.value.find((g) => g.loft.id === roll.loftId)
-  const idx = group ? group.rolls.findIndex((r) => r.id === roll.id) : -1
-  const neighbor = group && idx >= 0 ? group.rolls[idx + 1] || group.rolls[idx - 1] : null
-  selectedId.value = neighbor ? neighbor.id : roll.id
+  // 点哪条挂签就开哪一卷，面板近次只属该卷
+  selectedId.value = roll.id
   panelError.value = ''
   dipForm.startedAt = localNow()
   dipForm.resinPct = 28
