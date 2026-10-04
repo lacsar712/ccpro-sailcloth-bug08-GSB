@@ -33,11 +33,14 @@ const rollsByLoft = computed(() => {
     rolls: rolls.value
       .filter((r) => r.loftId === loft.id)
       .slice()
-      .sort((a, b) => b.fabricWeightGsm - a.fabricWeightGsm),
+      .sort((a, b) => a.fabricWeightGsm - b.fabricWeightGsm),
   }))
 })
 
-const footerCount = computed(() => rolls.value.length)
+const footerCount = computed(() => {
+  if (!selected.value) return rolls.value.length
+  return rolls.value.filter((r) => r.loftId === selected.value.loftId).length
+})
 
 const selectedDips = computed(() => {
   if (!selectedId.value) return []
@@ -63,10 +66,7 @@ async function load() {
 }
 
 function openRoll(roll) {
-  const group = rollsByLoft.value.find((g) => g.loft.id === roll.loftId)
-  const idx = group ? group.rolls.findIndex((r) => r.id === roll.id) : -1
-  const neighbor = group && idx >= 0 ? group.rolls[idx + 1] || group.rolls[idx - 1] : null
-  selectedId.value = neighbor ? neighbor.id : roll.id
+  selectedId.value = roll.id
   panelError.value = ''
   dipForm.startedAt = localNow()
   dipForm.resinPct = 28
